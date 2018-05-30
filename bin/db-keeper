@@ -8,8 +8,7 @@ sys.path.insert(0, os.path.join(__top_dir__, '3rd'))
 sys.path.insert(0, os.path.join(__top_dir__, 'src'))
 
 import common.mysql as mysql
-
-from schema.sample import TableSample
+from schema import Tables
 
 def TruncateDB():
     sql = '''
@@ -28,10 +27,6 @@ def TruncateDB():
 
 def main():
     conn = mysql.Get()
-
-    tblist = [
-        TableSample(conn),
-    ]
 
     Help = False
     Show = False
@@ -62,7 +57,8 @@ def main():
     #if Rebuild:
     #    TruncateDB()
 
-    for tb in tblist:
+    for tbc in Tables:
+        tb = tbc(conn)
         if Show:
             print('Table: %s [ver %d]' % (tb.Name(), tb.Version()))
             print(tb.Schema())
