@@ -13,8 +13,7 @@ from werkzeug.serving import WSGIRequestHandler
 import flask, flask_restful
 
 import config
-
-from apps.test import Test
+from apps import Apps
 
 def output_json(data, code, headers=None):
     if code != http.HTTPStatus.OK and "message" in data:
@@ -48,7 +47,9 @@ def main():
     global output_json
     output_json = api.representation('application/json')(output_json)
 
-    api.add_resource(Test, "/test")
+    for name in Apps:
+        for ver in Apps[name]:
+            api.add_resource(Apps[name][ver], "/{}/{}".format(ver, name))
 
     cfg = config.Get('service')
     app.run(host=cfg['bind_host'], port=cfg['bind_port'], debug=config.DebugFlask, threaded=True)
