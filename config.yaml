@@ -1,0 +1,14 @@
+debug:
+    flask: True
+    generic: True
+
+service:
+    bind_host: "0.0.0.0"
+    bind_port: 1024
+
+mysql:
+    host: "10.10.10.10"
+    port: 3306
+    user: "py-skel"
+    passwd: "py-skel"
+    name: "py-skel_dev"

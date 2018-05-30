@@ -1,0 +1,85 @@
+#! /usr/bin/env python3.5
+# -*- coding: utf-8 -*-
+
+import os, sys
+__py_dir__ = os.path.split(os.path.realpath(__file__))[0]
+__top_dir__ = os.path.dirname(__py_dir__)
+sys.path.insert(0, os.path.join(__top_dir__, '3rd'))
+sys.path.insert(0, os.path.join(__top_dir__, 'src'))
+
+import http
+import json
+from werkzeug.serving import WSGIRequestHandler
+import flask, flask_restful
+
+import config
+
+from apps.test import Test
+
+def output_json(data, code, headers=None):
+    if code != http.HTTPStatus.OK and "message" in data:
+        if code == http.HTTPStatus.BAD_REQUEST:
+            icode = 1000
+        else:
+            icode = 1000 + code
+        data = {
+            "errcode": icode,
+            "errmsg": data["message"],
+        }
+    if data == None:
+        data = {}
+    if code == http.HTTPStatus.OK and "errcode" in data:
+        code = http.HTTPStatus.BAD_REQUEST
+
+    if config.DebugFlask:
+        data = json.dumps(data, ensure_ascii=False, sort_keys=True, indent=4)
+    else:
+        data = json.dumps(data, ensure_ascii=False)
+
+    if code != http.HTTPStatus.OK or config.Debug:
+        print(data)
+
+    return flask.make_response(data, code, headers)
+
+def main():
+    app = flask.Flask(__name__)
+    api = flask_restful.Api(app)
+
+    global output_json
+    output_json = api.representation('application/json')(output_json)
+
+    api.add_resource(Test, "/test")
+
+    cfg = config.Get('service')
+    app.run(host=cfg['bind_host'], port=cfg['bind_port'], debug=config.DebugFlask, threaded=True)
+
+def setLogger():
+    cfg = None
+    for i, v in enumerate(sys.argv):
+        if v == '--log-file':
+            if i == len(sys.argv) - 1:
+                print('No log file found after --log-file flag')
+                sys.exit(1)
+            cfg = sys.argv[i+1]
+            break
+    if cfg == None:
+        return
+    f = open(cfg, 'a')
+    sys.stdout = f
+    sys.stderr = f
+
+def helper():
+    if '--help' in sys.argv:
+        print('Usage: %s [--help] [--config {config file path}] [--log-file {log file path}]' % (sys.argv[0]))
+        sys.exit(0)
+
+if __name__ == '__main__':
+    try:
+        helper()
+        setLogger()
+
+        WSGIRequestHandler.protocol_version = "HTTP/1.1"
+
+        main()
+    except KeyboardInterrupt as ki:
+        pass

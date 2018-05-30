@@ -1,0 +1,6 @@
+*.swp
+*.swo
+tmp
+__pycache__
+config.prod.yaml
+config.test.yaml

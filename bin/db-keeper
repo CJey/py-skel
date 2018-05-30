@@ -1,0 +1,82 @@
+#! /usr/bin/env python3.5
+# -*- coding: utf-8 -*-
+
+import os, sys
+__py_dir__ = os.path.split(os.path.realpath(__file__))[0]
+__top_dir__ = os.path.dirname(__py_dir__)
+sys.path.insert(0, os.path.join(__top_dir__, '3rd'))
+sys.path.insert(0, os.path.join(__top_dir__, 'src'))
+
+import common.mysql as mysql
+
+from schema.sample import TableSample
+
+def TruncateDB():
+    sql = '''
+    select table_name from information_schema.tables
+    where table_schema=(select database())
+    '''
+
+    conn = mysql.Get()
+    with conn.cursor() as cur:
+        cur.execute(sql)
+        rows = cur.fetchall()
+        if rows:
+            for row in rows:
+                cur.execute('drop table `{}`'.format(row[0]))
+    conn.commit()
+
+def main():
+    conn = mysql.Get()
+
+    tblist = [
+        TableSample(conn),
+    ]
+
+    Help = False
+    Show = False
+    Doit = False
+    Rebuild = False
+    if len(sys.argv) > 1:
+        v = sys.argv[1].lower()
+        if v == 'show':
+            Show = True
+        elif v == 'doit':
+            Doit = True
+        elif v == 'rebuild':
+            Rebuild = True
+            Doit = True
+        else:
+            Help = True
+    else:
+        Help = True
+
+    if Help:
+        print("Usage: %s [doit|show|help]" % (sys.argv[0]))
+        print("--")
+        print("  doit: Auto upgrading all tables")
+        print("  show: Print schema of all tables")
+        print("  help: Show this message")
+        return
+
+    #if Rebuild:
+    #    TruncateDB()
+
+    for tb in tblist:
+        if Show:
+            print('Table: %s [ver %d]' % (tb.Name(), tb.Version()))
+            print(tb.Schema())
+        if Doit:
+            print("Checking table --> %s" % (tb.Name()))
+            if Rebuild:
+                if tb.Drop():
+                    print("Dropped table --> %s" % (tb.Name()))
+            tb.AutoUpdate()
+
+        print('---')
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt as ki:
+        pass

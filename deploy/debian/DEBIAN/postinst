@@ -1,0 +1,30 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+  abort-upgrade|abort-remove|abort-deconfigure|configure)
+    ;;  
+
+  *)  
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+    ;;  
+esac
+
+$PJNAME=py-skel
+$NAME=py-skel
+
+if [ -x /etc/init.d/$NAME -a -f /opt/teamin/$PJNAME/config.yaml ]; then
+  SRV_PID="$(ps ax | grep -F python3.5 | grep /opt/teamin/$PJNAME/bin/$NAME | awk '{print $1}')"
+  if [ -s /run/teamin/$NAME.pid ] && [ -n "$SRV_PID" ]; then
+    if ! invoke-rc.d $NAME stop; then
+      kill -s KILL "$SRV_PID"
+    fi
+  fi
+  invoke-rc.d $NAME start || exit $?
+  update-rc.d -f $NAME defaults
+fi
+
+
+
+exit 0

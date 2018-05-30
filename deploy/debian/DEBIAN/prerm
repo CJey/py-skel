@@ -1,0 +1,31 @@
+#!/bin/sh
+set -e
+
+$PJNAME=py-skel
+$NAME=py-skel
+
+case "$1" in
+  remove|remove-in-favour|deconfigure|deconfigure-in-favour)
+    if [ -x /etc/init.d/$NAME ]; then
+      SRV_PID="$(ps ax | grep -F python3.5 | grep /opt/teamin/$PJNAME/bin/$NAME | awk '{print $1}')"
+      if [ -s /run/teamin/$NAME.pid ] && [ -n "$SRV_PID" ]; then
+        if ! invoke-rc.d $NAME stop; then
+          kill -s KILL "$SRV_PID"
+        fi
+      fi
+      update-rc.d -f $NAME remove
+    fi
+    ;;  
+
+  upgrade|failed-upgrade)
+    ;;  
+
+  *)  
+    echo "prerm called with unknown argument \`$1'" >&2
+    exit 1
+    ;;  
+esac
+
+
+
+exit 0
