@@ -11,8 +11,8 @@ case "$1" in
     ;;  
 esac
 
-$PJNAME=py-skel
-$NAME=py-skel
+PJNAME=py-skel
+NAME=py-skel
 
 if [ -x /etc/init.d/$NAME -a -f /opt/teamin/$PJNAME/config.yaml ]; then
   SRV_PID="$(ps ax | grep -F python3.5 | grep /opt/teamin/$PJNAME/bin/$NAME | awk '{print $1}')"
